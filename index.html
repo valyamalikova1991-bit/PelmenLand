@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PelmenLand - 3D Форум</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #ff4500;
+            --secondary-color: #ff8c00;
+            --dark-color: #1a1a1a;
+            --light-color: #f5f5f5;
+            --accent-color: #ff6347;
+            --theme-color: #ff4500;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            overflow-x: hidden;
+        }
+
+        #scene-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 1s ease;
+        }
+
+        .welcome-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .welcome-content {
+            text-align: center;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeInUp 1.5s ease forwards 0.5s;
+        }
+
+        .welcome-logo {
+            font-size: 5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-shadow: 0 0 20px rgba(255, 69, 0, 0.7);
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.5rem;
+            color: var(--light-color);
+            margin-bottom: 2rem;
+        }
+
+        .welcome-btn {
+            background-color: var(--primary-color);
+            color: var(--dark-color);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 69, 0, 0.5);
+        }
+
+        .welcome-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(255, 69, 0, 0.7);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            background-color: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--theme-color);
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--theme-color);
+            text-shadow: 0 0 10px rgba(var(--theme-rgb), 0.5);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav li {
+            margin-left: 1.5rem;
+        }
+
+        nav a {
+            color: var(--light-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: var(--theme-color);
+            color: var(--dark-color);
+        }
+
+        .user-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-controls button {
+            background-color: var(--theme-color);
+            color: var(--dark-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .user-controls button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .search-container {
+            display: flex;
+            margin-right: 1rem;
+        }
+
+        .search-container input {
+            padding: 0.5rem;
+            border-radius: 4px 0 0 4px;
+            border: 1px solid #444;
+            background-color: #2a2a2a;
+            color: var(--light-color);
+            width: 200px;
+        }
+
+        .search-container button {
+            background-color: var(--theme-color);
+            color: var(--dark-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 5;
+        }
+
+        .forum-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background-color: rgba(26, 26, 26, 0.8);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--theme-color);
+        }
+
+        .forum-title {
+            font-size: 2rem;
+            color: var(--theme-color);
+        }
+
+        .create-post-btn {
+            background-color: var(--theme-color);
+            color: var(--dark-color);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .create-post-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .posts-container {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .post {
+            background-color: rgba(26, 26, 26, 0.8);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+            transition: all 0.3s ease;
+        }
+
+        .post:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--theme-color);
+            margin-right: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        .author-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .author-info .role {
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+        }
+
+        .post-date {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .post-content h2 {
+            color: var(--theme-color);
+            margin-bottom: 0.8rem;
+        }
+
+        .post-content p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #333;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .post-actions button {
+            background: none;
+            border: none;
+            color: var(--light-color);
+            cursor: pointer;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .post-actions button:hover {
+            background-color: rgba(var(--theme-rgb), 0.2);
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .solved {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .closed {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--dark-color);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            border: 2px solid var(--theme-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--theme-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--light-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--light-color);
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #2a2a2a;
+            color: var(--light-color);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background-color: var(--theme-color);
+            color: var(--dark-color);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .admin-controls {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: rgba(26, 26, 26, 0.8);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .admin-controls h2 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .admin-actions button {
+            background-color: var(--accent-color);
+            color: var(--dark-color);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .admin-actions button:hover {
+            background-color: var(--primary-color);
+        }
+
+        .color-themes {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            border-color: white;
+            transform: scale(1.1);
+        }
+
+        .theme-purple { background-color: #8a2be2; }
+        .theme-blue { background-color: #1e90ff; }
+        .theme-cyan { background-color: #00ced1; }
+        .theme-green { background-color: #32cd32; }
+        .theme-yellow { background-color: #ffd700; }
+
+        .shape-options {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .shape-option {
+            padding: 0.5rem 1rem;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .shape-option:hover {
+            background-color: #3a3a3a;
+        }
+
+        .shape-option.active {
+            background-color: var(--theme-color);
+            color: var(--dark-color);
+        }
+
+        .profile-extras {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .about-content {
+            background-color: rgba(26, 26, 26, 0.8);
+            padding: 2rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--theme-color);
+            margin-top: 2rem;
+        }
+
+        .about-content h2 {
+            color: var(--theme-color);
+            margin-bottom: 1rem;
+        }
+
+        .about-content p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            nav ul {
+                margin-top: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            nav li {
+                margin: 0.5rem;
+            }
+
+            .user-controls {
+                margin-top: 1rem;
+            }
+
+            .forum-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .search-container {
+                margin-top: 1rem;
+                width: 100%;
+            }
+
+            .search-container input {
+                width: 100%;
+            }
+
+            .welcome-logo {
+                font-size: 3rem;
+            }
+
+            .welcome-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .profile-extras {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="scene-container"></div>
+
+    <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-content">
+            <h1 class="welcome-logo">PelmenLand</h1>
+            <p class="welcome-subtitle">PelmenLand.aurorix.ru</p>
+            <button class="welcome-btn" id="enter-forum-btn">К форуму</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="logo">PelmenLand</div>
+        <nav>
+            <ul>
+                <li><a href="#" id="home-link">Главная</a></li>
+                <li><a href="#" id="forum-link">Форум</a></li>
+                <li><a href="#" id="about-link">О нас</a></li>
+                <li><a href="#" id="shop-link">Наш Магазин</a></li>
+                <li><a href="#" id="profile-link">Профиль</a></li>
+                <li><a href="#" id="admin-link" style="display:none;">Админ-панель</a></li>
+            </ul>
+        </nav>
+        <div class="user-controls">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Поиск...">
+                <button id="search-btn"><i class="fas fa-search"></i></button>
+            </div>
+            <span id="user-info"></span>
+            <button id="login-btn">Войти</button>
+            <button id="logout-btn" style="display:none;">Выйти</button>
+        </div>
+    </header>
+
+    <main>
+        <div id="home-content">
+            <div class="forum-header">
+                <h1 class="forum-title">Добро пожаловать в PelmenLand!</h1>
+                <button class="create-post-btn" id="create-post-btn">Создать пост</button>
+            </div>
+
+            <div class="posts-container" id="posts-container">
+                <!-- Посты будут добавляться динамически -->
+            </div>
+
+            <div class="admin-controls" id="admin-controls" style="display:none;">
+                <h2>Панель администратора</h2>
+                <div class="admin-actions">
+                    <button id="manage-users-btn">Управление пользователями</button>
+                    <button id="moderate-posts-btn">Модерация постов</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="about-content" class="about-content" style="display:none;">
+            <h2>О нашем сервере</h2>
+            <p>Наш сервер PelmenLand работает с версии 1.16.5 по версию 1.21.</p>
+            <p>Подключиться к серверу можно по адресу: <strong>PelmenLand.aurorix.ru</strong></p>
+            <p>Присоединяйтесь к нашему сообществу и наслаждайтесь игрой на одном из лучших серверов!</p>
+        </div>
+    </main>
+
+    <!-- Модальные окна -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Вход в аккаунт</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Имя пользователя</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Пароль</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div class="form-group">
+                    <input type="checkbox" id="remember-me">
+                    <label for="remember-me">Запомнить меня</label>
+                </div>
+                <button type="submit" class="submit-btn">Войти</button>
+            </form>
+            <p style="margin-top: 1rem; text-align: center;">
+                Нет аккаунта? <a href="#" id="register-link" style="color: var(--theme-color);">Зарегистрироваться</a>
+            </p>
+        </div>
+    </div>
+
+    <div class="modal" id="register-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Регистрация</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-username">Имя пользователя</label>
+                    <input type="text" id="register-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Пароль</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-confirm-password">Подтвердите пароль</label>
+                    <input type="password" id="register-confirm-password" required>
+                </div>
+                <button type="submit" class="submit-btn">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="create-post-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Создать пост</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="create-post-form">
+                <div class="form-group">
+                    <label for="post-title">Заголовок</label>
+                    <input type="text" id="post-title" required>
+                </div>
+                <div class="form-group">
+                    <label for="post-content">Содержание</label>
+                    <textarea id="post-content" required></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Опубликовать</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="profile-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Редактирование профиля</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="profile-form">
+                <div class="form-group">
+                    <label for="profile-username">Имя пользователя</label>
+                    <input type="text" id="profile-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="profile-description">Описание</label>
+                    <textarea id="profile-description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="profile-avatar">Аватар (URL)</label>
+                    <input type="text" id="profile-avatar">
+                </div>
+                <div class="profile-extras">
+                    <div class="form-group">
+                        <label for="profile-status">Статус</label>
+                        <input type="text" id="profile-status" placeholder="Ваш статус...">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-location">Местоположение</label>
+                        <input type="text" id="profile-location" placeholder="Откуда вы...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="profile-password">Новый пароль (оставьте пустым, если не хотите менять)</label>
+                    <input type="password" id="profile-password">
+                </div>
+                
+                <div class="form-group">
+                    <label>Цветовая тема:</label>
+                    <div class="color-themes">
+                        <div class="color-option theme-purple active" data-color="#8a2be2" data-rgb="138,43,226"></div>
+                        <div class="color-option theme-blue" data-color="#1e90ff" data-rgb="30,144,255"></div>
+                        <div class="color-option theme-cyan" data-color="#00ced1" data-rgb="0,206,209"></div>
+                        <div class="color-option theme-green" data-color="#32cd32" data-rgb="50,205,50"></div>
+                        <div class="color-option theme-yellow" data-color="#ffd700" data-rgb="255,215,0"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>3D Фигуры на фоне:</label>
+                    <div class="shape-options">
+                        <div class="shape-option active" data-shape="stars">Звезды</div>
+                        <div class="shape-option" data-shape="stars2">Звезды 2</div>
+                        <div class="shape-option" data-shape="circles">Круги</div>
+                        <div class="shape-option" data-shape="diamonds">Ромбики</div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="admin-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Управление пользователями</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div id="admin-users-list">
+                <!-- Список пользователей для администрирования -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Инициализация базы данных в localStorage
+        function initDatabase() {
+            if (!localStorage.getItem('forumUsers')) {
+                const defaultUsers = [
+                    { 
+                        username: 'DeksonKwm', 
+                        password: 'testsait123', 
+                        role: 'admin', 
+                        description: 'Создатель форума',
+                        avatar: null,
+                        status: 'Основатель PelmenLand',
+                        location: 'Россия',
+                        theme: '#ff4500',
+                        themeRgb: '255,69,0',
+                        shape: 'stars'
+                    }
+                ];
+                localStorage.setItem('forumUsers', JSON.stringify(defaultUsers));
+            }
+
+            if (!localStorage.getItem('forumPosts')) {
+                const defaultPosts = [
+                    {
+                        id: 1,
+                        title: 'Добро пожаловать на форум PelmenLand!',
+                        content: 'Это демонстрационный пост. Вы можете создавать свои собственные посты после регистрации и входа в систему.',
+                        author: 'DeksonKwm',
+                        date: new Date().toISOString(),
+                        status: 'open'
+                    },
+                    {
+                        id: 2,
+                        title: 'Новости сервера',
+                        content: 'Сервер был обновлен до версии 1.19.2. Добавлены новые мобы и улучшена производительность.',
+                        author: 'DeksonKwm',
+                        date: new Date().toISOString(),
+                        status: 'open'
+                    }
+                ];
+                localStorage.setItem('forumPosts', JSON.stringify(defaultPosts));
+            }
+
+            if (!localStorage.getItem('currentUser')) {
+                localStorage.setItem('currentUser', JSON.stringify(null));
+            }
+        }
+
+        // Работа с пользователями
+        function getUsers() {
+            return JSON.parse(localStorage.getItem('forumUsers')) || [];
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem('forumUsers', JSON.stringify(users));
+        }
+
+        function getPosts() {
+            return JSON.parse(localStorage.getItem('forumPosts')) || [];
+        }
+
+        function savePosts(posts) {
+            localStorage.setItem('forumPosts', JSON.stringify(posts));
+        }
+
+        function getCurrentUser() {
+            return JSON.parse(localStorage.getItem('currentUser'));
+        }
+
+        function setCurrentUser(user) {
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            if (user && user.theme) {
+                applyUserTheme(user.theme, user.themeRgb);
+            }
+            if (user && user.shape) {
+                init3DScene(user.shape);
+            }
+        }
+
+        // Применение пользовательской темы
+        function applyUserTheme(color, rgb) {
+            document.documentElement.style.setProperty('--theme-color', color);
+            document.documentElement.style.setProperty('--theme-rgb', rgb);
+            
+            // Сохраняем тему в localStorage
+            const currentUser = getCurrentUser();
+            if (currentUser) {
+                currentUser.theme = color;
+                currentUser.themeRgb = rgb;
+                setCurrentUser(currentUser);
+                
+                // Обновляем пользователя в базе
+                const users = getUsers();
+                const userIndex = users.findIndex(u => u.username === currentUser.username);
+                if (userIndex !== -1) {
+                    users[userIndex].theme = color;
+                    users[userIndex].themeRgb = rgb;
+                    saveUsers(users);
+                }
+            }
+        }
+
+        // 3D сцена с разными фигурами
+        let scene, camera, renderer, objects = [];
+
+        function init3DScene(shapeType = 'stars') {
+            const container = document.getElementById('scene-container');
+            
+            // Очищаем предыдущую сцену
+            if (container.firstChild) {
+                container.removeChild(container.firstChild);
+            }
+            if (scene) {
+                while(scene.children.length > 0) { 
+                    scene.remove(scene.children[0]); 
+                }
+            }
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            // Добавляем фиолетовый туман
+            scene.fog = new THREE.Fog(0x4b0082, 10, 50);
+
+            // Создание объектов в зависимости от выбранного типа
+            objects = [];
+            
+            switch(shapeType) {
+                case 'stars':
+                    createStars(1000);
+                    break;
+                case 'stars2':
+                    createDetailedStars(500);
+                    break;
+                case 'circles':
+                    createCircles(50);
+                    break;
+                case 'diamonds':
+                    createDiamonds(30);
+                    break;
+            }
+
+            // Добавление освещения
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+
+            camera.position.z = 15;
+
+            // Анимация
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                const mouseX = (event?.clientX || window.innerWidth / 2) / window.innerWidth;
+                const mouseY = (event?.clientY || window.innerHeight / 2) / window.innerHeight;
+                
+                camera.position.x = (mouseX - 0.5) * 5;
+                camera.position.y = -(mouseY - 0.5) * 5;
+                camera.lookAt(scene.position);
+                
+                // Анимация объектов
+                objects.forEach(obj => {
+                    obj.rotation.x += 0.005;
+                    obj.rotation.y += 0.01;
+                    if (shapeType === 'stars' || shapeType === 'stars2') {
+                        obj.rotation.z += 0.002;
+                    }
+                });
+                
+                renderer.render(scene, camera);
+            }
+
+            // Обработка движения мыши
+            document.addEventListener('mousemove', (event) => {
+                window.event = event;
+            });
+
+            animate();
+
+            // Обработка изменения размера окна
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function createStars(count) {
+            const starGeometry = new THREE.BufferGeometry();
+            
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            
+            for (let i = 0; i < count; i++) {
+                const i3 = i * 3;
+                positions[i3] = (Math.random() - 0.5) * 100;
+                positions[i3 + 1] = (Math.random() - 0.5) * 100;
+                positions[i3 + 2] = (Math.random() - 0.5) * 100;
+                
+                colors[i3] = 1;
+                colors[i3 + 1] = Math.random() * 0.5 + 0.5;
+                colors[i3 + 2] = Math.random() * 0.5;
+            }
+            
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const starMaterial = new THREE.PointsMaterial({
+                size: 0.2,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+            objects.push(stars);
+        }
+
+        function createDetailedStars(count) {
+            const starGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+            const starMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xffffff,
+                shininess: 100,
+                emissive: 0x444444
+            });
+            
+            for (let i = 0; i < count; i++) {
+                const star = new THREE.Mesh(starGeometry, starMaterial);
+                star.position.x = (Math.random() - 0.5) * 80;
+                star.position.y = (Math.random() - 0.5) * 80;
+                star.position.z = (Math.random() - 0.5) * 80;
+                scene.add(star);
+                objects.push(star);
+            }
+        }
+
+        function createCircles(count) {
+            const circleGeometry = new THREE.TorusGeometry(0.5, 0.2, 8, 20);
+            const circleMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xff4500,
+                shininess: 100
+            });
+            
+            for (let i = 0; i < count; i++) {
+                const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+                circle.position.x = (Math.random() - 0.5) * 60;
+                circle.position.y = (Math.random() - 0.5) * 60;
+                circle.position.z = (Math.random() - 0.5) * 60;
+                scene.add(circle);
+                objects.push(circle);
+            }
+        }
+
+        function createDiamonds(count) {
+            const diamondGeometry = new THREE.OctahedronGeometry(0.7);
+            const diamondMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xff4500,
+                shininess: 100,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            for (let i = 0; i < count; i++) {
+                const diamond = new THREE.Mesh(diamondGeometry, diamondMaterial);
+                diamond.position.x = (Math.random() - 0.5) * 50;
+                diamond.position.y = (Math.random() - 0.5) * 50;
+                diamond.position.z = (Math.random() - 0.5) * 50;
+                scene.add(diamond);
+                objects.push(diamond);
+            }
+        }
+
+        // UI функции
+        function updateUI() {
+            const currentUser = getCurrentUser();
+            const userInfo = document.getElementById('user-info');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const createPostBtn = document.getElementById('create-post-btn');
+            const adminLink = document.getElementById('admin-link');
+            const adminControls = document.getElementById('admin-controls');
+
+            if (currentUser) {
+                userInfo.textContent = `Привет, ${currentUser.username} (${currentUser.role})`;
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'block';
+                createPostBtn.style.display = 'block';
+                
+                if (currentUser.role === 'admin') {
+                    adminLink.style.display = 'block';
+                    adminControls.style.display = 'block';
+                } else {
+                    adminLink.style.display = 'none';
+                    adminControls.style.display = 'none';
+                }
+                
+                // Применяем тему пользователя
+                if (currentUser.theme) {
+                    applyUserTheme(currentUser.theme, currentUser.themeRgb);
+                }
+            } else {
+                userInfo.textContent = '';
+                loginBtn.style.display = 'block';
+                logoutBtn.style.display = 'none';
+                createPostBtn.style.display = 'none';
+                adminLink.style.display = 'none';
+                adminControls.style.display = 'none';
+            }
+
+            renderPosts();
+        }
+
+        function renderPosts() {
+            const postsContainer = document.getElementById('posts-container');
+            const posts = getPosts();
+            const currentUser = getCurrentUser();
+
+            postsContainer.innerHTML = '';
+
+            // ИСПРАВЛЕНИЕ БАГА: показываем все посты, а не только текущего пользователя
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                
+                const author = getUsers().find(u => u.username === post.author) || { 
+                    username: post.author, 
+                    role: 'user', 
+                    description: '',
+                    avatar: null,
+                    status: '',
+                    location: ''
+                };
+                
+                let statusBadge = '';
+                if (post.status === 'solved') {
+                    statusBadge = '<span class="status-badge solved">Решено</span>';
+                } else if (post.status === 'closed') {
+                    statusBadge = '<span class="status-badge closed">Завершено</span>';
+                }
+                
+                let adminActions = '';
+                if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'moderator')) {
+                    adminActions = `
+                        <div class="post-actions">
+                            <button class="solve-btn" data-id="${post.id}">Решено</button>
+                            <button class="close-btn" data-id="${post.id}">Завершить</button>
+                            <button class="delete-btn" data-id="${post.id}">Удалить</button>
+                        </div>
+                    `;
+                }
+                
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-author">
+                            <div class="avatar">${author.username.charAt(0).toUpperCase()}</div>
+                            <div class="author-info">
+                                <h3>${author.username}</h3>
+                                <div class="role">${author.role} ${author.status ? '• ' + author.status : ''}</div>
+                            </div>
+                        </div>
+                        <div class="post-date">${new Date(post.date).toLocaleDateString('ru-RU')}</div>
+                    </div>
+                    <div class="post-content">
+                        <h2>${post.title}</h2>
+                        <p>${post.content}</p>
+                    </div>
+                    <div class="post-footer">
+                        ${statusBadge}
+                        ${adminActions}
+                    </div>
+                `;
+                
+                postsContainer.appendChild(postElement);
+            });
+
+            // Добавление обработчиков событий для кнопок администратора
+            if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'moderator')) {
+                document.querySelectorAll('.solve-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const postId = parseInt(e.target.getAttribute('data-id'));
+                        markPostAsSolved(postId);
+                    });
+                });
+                
+                document.querySelectorAll('.close-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const postId = parseInt(e.target.getAttribute('data-id'));
+                        markPostAsClosed(postId);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const postId = parseInt(e.target.getAttribute('data-id'));
+                        deletePost(postId);
+                    });
+                });
+            }
+        }
+
+        function markPostAsSolved(postId) {
+            const posts = getPosts();
+            const postIndex = posts.findIndex(p => p.id === postId);
+            
+            if (postIndex !== -1) {
+                posts[postIndex].status = 'solved';
+                savePosts(posts);
+                renderPosts();
+            }
+        }
+
+        function markPostAsClosed(postId) {
+            const posts = getPosts();
+            const postIndex = posts.findIndex(p => p.id === postId);
+            
+            if (postIndex !== -1) {
+                posts[postIndex].status = 'closed';
+                savePosts(posts);
+                renderPosts();
+            }
+        }
+
+        function deletePost(postId) {
+            const posts = getPosts();
+            const filteredPosts = posts.filter(p => p.id !== postId);
+            savePosts(filteredPosts);
+            renderPosts();
+        }
+
+        // Поиск по постам
+        function setupSearch() {
+            const searchInput = document.getElementById('search-input');
+            const searchBtn = document.getElementById('search-btn');
+            
+            searchBtn.addEventListener('click', performSearch);
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+        }
+        
+        function performSearch() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const posts = getPosts();
+            
+            if (!searchTerm) {
+                renderPosts();
+                return;
+            }
+            
+            const filteredPosts = posts.filter(post => 
+                post.title.toLowerCase().includes(searchTerm) || 
+                post.content.toLowerCase().includes(searchTerm) ||
+                post.author.toLowerCase().includes(searchTerm)
+            );
+            
+            const postsContainer = document.getElementById('posts-container');
+            postsContainer.innerHTML = '';
+            
+            if (filteredPosts.length === 0) {
+                postsContainer.innerHTML = '<p>По вашему запросу ничего не найдено.</p>';
+                return;
+            }
+            
+            filteredPosts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                
+                const author = getUsers().find(u => u.username === post.author) || { 
+                    username: post.author, 
+                    role: 'user', 
+                    description: '',
+                    avatar: null
+                };
+                
+                let statusBadge = '';
+                if (post.status === 'solved') {
+                    statusBadge = '<span class="status-badge solved">Решено</span>';
+                } else if (post.status === 'closed') {
+                    statusBadge = '<span class="status-badge closed">Завершено</span>';
+                }
+                
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-author">
+                            <div class="avatar">${author.username.charAt(0).toUpperCase()}</div>
+                            <div class="author-info">
+                                <h3>${author.username}</h3>
+                                <div class="role">${author.role}</div>
+                            </div>
+                        </div>
+                        <div class="post-date">${new Date(post.date).toLocaleDateString('ru-RU')}</div>
+                    </div>
+                    <div class="post-content">
+                        <h2>${post.title}</h2>
+                        <p>${post.content}</p>
+                    </div>
+                    <div class="post-footer">
+                        ${statusBadge}
+                    </div>
+                `;
+                
+                postsContainer.appendChild(postElement);
+            });
+        }
+
+        // Модальные окна
+        function setupModals() {
+            // Получение всех модальных окон и кнопок закрытия
+            const modals = document.querySelectorAll('.modal');
+            const closeButtons = document.querySelectorAll('.close-btn');
+            
+            // Функция для открытия модального окна
+            window.openModal = function(modalId) {
+                document.getElementById(modalId).style.display = 'flex';
+            };
+            
+            // Функция для закрытия модального окна
+            window.closeModal = function(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            };
+            
+            // Закрытие модального окна при клике на кнопку закрытия
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    modal.style.display = 'none';
+                });
+            });
+            
+            // Закрытие модального окна при клике вне его содержимого
+            modals.forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Обработчики для кнопок интерфейса
+            document.getElementById('login-btn').addEventListener('click', () => openModal('login-modal'));
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            document.getElementById('register-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                closeModal('login-modal');
+                openModal('register-modal');
+            });
+            document.getElementById('create-post-btn').addEventListener('click', () => {
+                if (getCurrentUser()) {
+                    openModal('create-post-modal');
+                } else {
+                    openModal('login-modal');
+                }
+            });
+            document.getElementById('profile-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (getCurrentUser()) {
+                    openProfileModal();
+                } else {
+                    openModal('login-modal');
+                }
+            });
+            document.getElementById('admin-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                openAdminModal();
+            });
+            document.getElementById('manage-users-btn').addEventListener('click', openAdminModal);
+            document.getElementById('enter-forum-btn').addEventListener('click', hideWelcomeScreen);
+            
+            // Навигация по страницам
+            document.getElementById('home-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                showHomePage();
+            });
+            
+            document.getElementById('forum-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                showHomePage();
+            });
+            
+            document.getElementById('about-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                showAboutPage();
+            });
+            
+            document.getElementById('shop-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.open('https://pelmenland.cdonate.ru', '_blank');
+            });
+            
+            // Обработчики форм
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('register-form').addEventListener('submit', handleRegister);
+            document.getElementById('create-post-form').addEventListener('submit', handleCreatePost);
+            document.getElementById('profile-form').addEventListener('submit', handleProfileUpdate);
+            
+            // Обработчики выбора цвета
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.color-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    const color = this.getAttribute('data-color');
+                    const rgb = this.getAttribute('data-rgb');
+                    applyUserTheme(color, rgb);
+                });
+            });
+            
+            // Обработчики выбора фигур
+            document.querySelectorAll('.shape-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.shape-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    const shape = this.getAttribute('data-shape');
+                    applyUserShape(shape);
+                });
+            });
+        }
+
+        function applyUserShape(shape) {
+            const currentUser = getCurrentUser();
+            if (currentUser) {
+                currentUser.shape = shape;
+                setCurrentUser(currentUser);
+                
+                // Обновляем пользователя в базе
+                const users = getUsers();
+                const userIndex = users.findIndex(u => u.username === currentUser.username);
+                if (userIndex !== -1) {
+                    users[userIndex].shape = shape;
+                    saveUsers(users);
+                }
+                
+                init3DScene(shape);
+            }
+        }
+
+        function showHomePage() {
+            document.getElementById('home-content').style.display = 'block';
+            document.getElementById('about-content').style.display = 'none';
+        }
+
+        function showAboutPage() {
+            document.getElementById('home-content').style.display = 'none';
+            document.getElementById('about-content').style.display = 'block';
+        }
+
+        function hideWelcomeScreen() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('welcome-screen').style.display = 'none';
+            }, 1000);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
+            
+            const users = getUsers();
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                setCurrentUser(user);
+                if (rememberMe) {
+                    localStorage.setItem('rememberedUser', JSON.stringify(user));
+                }
+                closeModal('login-modal');
+                updateUI();
+            } else {
+                alert('Неверное имя пользователя или пароль');
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            if (password !== confirmPassword) {
+                alert('Пароли не совпадают');
+                return;
+            }
+            
+            const users = getUsers();
+            if (users.find(u => u.username === username)) {
+                alert('Пользователь с таким именем уже существует');
+                return;
+            }
+            
+            const newUser = {
+                username,
+                password,
+                role: 'user',
+                description: '',
+                avatar: null,
+                status: '',
+                location: '',
+                theme: '#ff4500',
+                themeRgb: '255,69,0',
+                shape: 'stars'
+            };
+            
+            users.push(newUser);
+            saveUsers(users);
+            
+            alert('Регистрация успешна! Теперь вы можете войти в систему.');
+            closeModal('register-modal');
+            openModal('login-modal');
+        }
+
+        function handleCreatePost(e) {
+            e.preventDefault();
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+            const currentUser = getCurrentUser();
+            
+            const posts = getPosts();
+            const newPost = {
+                id: posts.length > 0 ? Math.max(...posts.map(p => p.id)) + 1 : 1,
+                title,
+                content,
+                author: currentUser.username,
+                date: new Date().toISOString(),
+                status: 'open'
+            };
+            
+            posts.push(newPost);
+            savePosts(posts);
+            
+            closeModal('create-post-modal');
+            document.getElementById('create-post-form').reset();
+            renderPosts();
+        }
+
+        function openProfileModal() {
+            const currentUser = getCurrentUser();
+            document.getElementById('profile-username').value = currentUser.username;
+            document.getElementById('profile-description').value = currentUser.description || '';
+            document.getElementById('profile-avatar').value = currentUser.avatar || '';
+            document.getElementById('profile-status').value = currentUser.status || '';
+            document.getElementById('profile-location').value = currentUser.location || '';
+            
+            // Устанавливаем активный цвет темы
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.getAttribute('data-color') === currentUser.theme) {
+                    option.classList.add('active');
+                }
+            });
+            
+            // Устанавливаем активную фигуру
+            document.querySelectorAll('.shape-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.getAttribute('data-shape') === currentUser.shape) {
+                    option.classList.add('active');
+                }
+            });
+            
+            openModal('profile-modal');
+        }
+
+        function handleProfileUpdate(e) {
+            e.preventDefault();
+            const username = document.getElementById('profile-username').value;
+            const description = document.getElementById('profile-description').value;
+            const avatar = document.getElementById('profile-avatar').value;
+            const status = document.getElementById('profile-status').value;
+            const location = document.getElementById('profile-location').value;
+            const password = document.getElementById('profile-password').value;
+            
+            const users = getUsers();
+            const currentUser = getCurrentUser();
+            const userIndex = users.findIndex(u => u.username === currentUser.username);
+            
+            if (userIndex !== -1) {
+                // Проверяем, не занято ли новое имя пользователя
+                if (username !== currentUser.username && users.find(u => u.username === username)) {
+                    alert('Пользователь с таким именем уже существует');
+                    return;
+                }
+                
+                users[userIndex].username = username;
+                users[userIndex].description = description;
+                users[userIndex].avatar = avatar;
+                users[userIndex].status = status;
+                users[userIndex].location = location;
+                
+                if (password) {
+                    users[userIndex].password = password;
+                }
+                
+                saveUsers(users);
+                setCurrentUser(users[userIndex]);
+                
+                closeModal('profile-modal');
+                updateUI();
+                alert('Профиль успешно обновлен');
+            }
+        }
+
+        function openAdminModal() {
+            const users = getUsers();
+            const adminUsersList = document.getElementById('admin-users-list');
+            
+            let usersHTML = '';
+            
+            // ИСПРАВЛЕНИЕ БАГА: показываем всех пользователей кроме текущего
+            const currentUser = getCurrentUser();
+            users.forEach(user => {
+                if (user.username !== currentUser.username) {
+                    usersHTML += `
+                        <div class="form-group" style="border-bottom: 1px solid #444; padding-bottom: 1rem; margin-bottom: 1rem;">
+                            <h3>${user.username}</h3>
+                            <p>Текущая роль: ${user.role}</p>
+                            <label for="role-${user.username}">Изменить роль:</label>
+                            <select id="role-${user.username}">
+                                <option value="user" ${user.role === 'user' ? 'selected' : ''}>Пользователь</option>
+                                <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Модератор</option>
+                                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Администратор</option>
+                            </select>
+                            <button class="submit-btn" style="margin-top: 0.5rem;" onclick="updateUserRole('${user.username}')">Обновить роль</button>
+                        </div>
+                    `;
+                }
+            });
+            
+            adminUsersList.innerHTML = usersHTML || '<p>Нет других пользователей для управления</p>';
+            openModal('admin-modal');
+        }
+
+        function updateUserRole(username) {
+            const newRole = document.getElementById(`role-${username}`).value;
+            const users = getUsers();
+            const userIndex = users.findIndex(u => u.username === username);
+            
+            if (userIndex !== -1) {
+                users[userIndex].role = newRole;
+                saveUsers(users);
+                
+                // Если обновляем текущего пользователя, обновляем его данные
+                const currentUser = getCurrentUser();
+                if (currentUser && currentUser.username === username) {
+                    setCurrentUser(users[userIndex]);
+                }
+                
+                alert(`Роль пользователя ${username} изменена на ${newRole}`);
+                updateUI();
+            }
+        }
+
+        function logout() {
+            setCurrentUser(null);
+            localStorage.removeItem('rememberedUser');
+            updateUI();
+        }
+
+        // Проверка запомненного пользователя при загрузке
+        function checkRememberedUser() {
+            const rememberedUser = localStorage.getItem('rememberedUser');
+            if (rememberedUser) {
+                setCurrentUser(JSON.parse(rememberedUser));
+                hideWelcomeScreen();
+            }
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            initDatabase();
+            init3DScene('stars');
+            setupModals();
+            setupSearch();
+            checkRememberedUser();
+            updateUI();
+        });
+    </script>
+</body>
+</html>
